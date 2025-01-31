@@ -10,6 +10,7 @@ from marshmallow import Schema, fields, ValidationError
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATABASE = os.environ.get("DB_URI", f"sqlite:///{os.path.join(BASE_DIR, 'app.db')}")
 
+# Initialize Flask app
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -20,10 +21,13 @@ migrate = Migrate(app, db)
 db.init_app(app)
 api = Api(app)
 
-# Ensure database tables are created (for SQLite)
-@app.before_first_request
+# Ensure database tables are created (for SQLite) within app context
 def create_tables():
-    db.create_all()
+    with app.app_context():  # This ensures the db operations occur within the app context
+        db.create_all()
+
+# Call create_tables directly after initializing the app
+create_tables()
 
 # Marshmallow schemas for validation
 class RestaurantPizzaSchema(Schema):
